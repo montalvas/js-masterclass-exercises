@@ -11,13 +11,12 @@ const Parser = function() {
     commands.set("delete", /delete from ([a-z]+)(?: where (.+))?/);
 
     this.parse = function(statement) {
-        for (const command of commands) {
-            const result = statement.match(command[1]);
-            if (result) {
-                const commandName = command[0];
+        for (const [command, regExp] of commands) {
+            const parsedStatement = statement.match(regExp);
+            if (parsedStatement) {
                 return {
-                    command: commandName,
-                    parsedStatement: result
+                    command,
+                    parsedStatement
                 }
             }
         }
@@ -28,9 +27,9 @@ const database = {
     tables: {},
     parser: new Parser(),
     execute(statement) {
-        const {command, parsedStatement} = this.parser.parse(statement);
-        if (parsedStatement !== null) {
-            return this[command](parsedStatement);
+        const result = this.parser.parse(statement);
+        if (result) {
+            return this[result.command](result.parsedStatement);
         }
         const message = `Syntax error: ${statement}`;
         throw new DatabaseError(statement, message);
